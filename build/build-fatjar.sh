@@ -12,7 +12,7 @@ docker build --build-arg name=${ARTIFACT_NAME} -t ${DOCKER_TARGET} ${DOCKER_BUIL
 docker images
 docker push ${DOCKER_TARGET}
 
-export BUILD_TIMESTAMP=`date +'%Y-%m-%d %H:%M:%S %Z'`
+export BUILD_TIMESTAMP=`TZ='Europe/Helsinki' date +'%Y-%m-%d %H:%M:%S %Z'`
 aws dynamodb put-item --table-name builds --item "{\"Service\": {\"S\": \"${ARTIFACT_NAME}\"}, \"Build\": {\"S\": \"ci-${TRAVIS_BUILD_NUMBER}\"}, \"Branch\": {\"S\": \"${TRAVIS_BRANCH}\"}, \"Commit\": {\"S\": \"${TRAVIS_COMMIT}\"}, \"Time\": {\"S\": \"${BUILD_TIMESTAMP}\"}}" --condition-expression "attribute_not_exists(Id)" --region eu-west-1
 
 # Clean build dir to prevent mixing builds in multi-artifact repositories
