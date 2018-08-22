@@ -8,12 +8,9 @@ CATALINA_BASE="/opt/tomcat/"
 CERT="${CONFIGPATH}/cert/ssl.pem"
 LOGPATH="${CONFIGPATH}/log"
 
+echo "Downloading environment-specific properties"
 aws s3 cp s3://${ENV_BUCKET}/services/latest/ ${CONFIGPATH}/ --recursive --exclude "templates/*"
-
-echo "Copying resources ..."
 cp -vr ${CONFIGPATH}/* ${BASEPATH}/oph-configuration/
-
-echo "Copy logback-access.xml to use relative path."
 cp -v ${LOGPATH}/logback-access.xml ${CATALINA_BASE}/conf/
 
 echo "Overwriting with AWS-specific configs..."
@@ -41,15 +38,13 @@ fi
 
 export LC_CTYPE=fi_FI.UTF-8
 export JAVA_TOOL_OPTIONS='-Dfile.encoding=UTF-8'
+export JMX_PORT=1133
 mkdir -p /root/logs
 mkdir -p /root/tomcat
 ln -s /root/logs/ /root/tomcat/logs
 
 echo "Starting Prometheus node_exporter..."
 nohup /root/node_exporter > /root/node_exporter.log  2>&1 &
-
-export JMX_PORT=1133
-echo "Using JMX-port ${JMX_PORT}..."
 
 if [ ${DEBUG_ENABLED} == "true" ]; then
   echo "JDWP debugging enabled..."
@@ -68,9 +63,35 @@ STANDALONE_JAR=${HOME}/${NAME}.jar
 if [ -f "${STANDALONE_JAR}" ]; then
     echo "Starting standalone application..."
 
-    # Removed special case for suoritusrekisteri & virkailijan-tyopoyta & ataru-hakija & ataru-editori
-    # Removed special case for suoritusrekisteri certificate
-    # Removed special case for osaan db migration
+    # Service-specific boot-time exceptions
+    if [ ${NAME} == "suoritusrekisteri" ]; then
+      echo "Create common.properties"
+      cp -fv ${BASEPATH}/oph-configuration/${NAME}.properties ${BASEPATH}/oph-configuration/common.properties
+      YTLCERT="${CONFIGPATH}/suoritusrekisteri/ytlqa.crt"
+      if [ -f "${YTLCERT}" ]; then
+            echo "Installing YTL certificate for suoritusrekisteri"
+            keytool -import -noprompt -trustcacerts -alias ytl_qa_cert -storepass ${CACERTSPWD} -keystore /usr/java/latest/jre/lib/security/cacerts -file ${YTLCERT}
+        else
+            echo "YTL test certificate not found"
+      fi
+    elif [ ${NAME} == "virkailijan-tyopoyta" ]; then
+      echo "Create common.properties"
+      cp -fv ${BASEPATH}/oph-configuration/${NAME}.properties ${BASEPATH}/oph-configuration/common.properties
+    elif [ ${NAME} == "ataru-hakija" ]; then
+      export ATARU_HTTP_PORT=8080
+      export CONFIG=/root/oph-configuration/config.edn
+      export CONFIGDEFAULTS=/root/oph-configuration/config.edn
+      export APP=hakija
+    elif [ ${NAME} == "ataru-editori" ]; then
+      export ATARU_HTTP_PORT=8080
+      export CONFIG=/root/oph-configuration/config.edn
+      export CONFIGDEFAULTS=/root/oph-configuration/config.edn
+      export APP=virkailija
+    elif [ ${NAME} == "osaan" ]; then
+        echo "Running osaan database migration"
+        java -jar ${HOME}/osaan-db.jar -u oph
+    fi
+
 
     export HOME="/root"
     export LOGS="${HOME}/logs"
@@ -112,6 +133,6 @@ if [ -f "${STANDALONE_JAR}" ]; then
     echo "java ${JAVA_OPTS} -jar ${STANDALONE_JAR}" > /root/java-cmd.txt
     java ${JAVA_OPTS} -jar ${STANDALONE_JAR}
 else
-  echo "No fat jar found, exiting!"
+  echo "Fatal error: No fatjar found, exiting!"
   exit 1
 fi
