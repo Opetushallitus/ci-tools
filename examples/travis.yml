@@ -1,0 +1,34 @@
+sudo: required
+language: java
+jdk:
+  - oraclejdk8
+services:
+  - docker
+cache:
+  directories:
+    - $HOME/.m2
+env:
+  global:
+    # AWS_ACCESS_KEY_ID
+    - secure: "ENTER_ENCRYPTED_KEYS_HERE"
+    # AWS_SECRET_ACCESS_KEY
+    - secure: "ENTER_ENCRYPTED_KEYS_HERE"
+
+install:
+  - git clone https://github.com/Opetushallitus/ci-tools.git
+  - source ci-tools/common/setup-tools.sh
+  - export ARTIFACT_NAME="ENTER_SERVICE_NAME_HERE"
+
+script:
+  - mvn clean install -B -Dbranch=${TRAVIS_BRANCH} -Drevision=${TRAVIS_COMMIT} -DbuildNumber=${TRAVIS_BUILD_NUMBER}
+
+  - mv kayttooikeus-service/target/kayttooikeus-service-*.jar $DOCKER_BUILD_DIR/artifact/${ARTIFACT_NAME}.jar
+  - cp -vr src/main/resources/oph-configuration $DOCKER_BUILD_DIR/config/
+
+  - export BASE_IMAGE="base-legacy:0.1"
+  - ./ci-tools/common/pull-image.sh
+  - ./ci-tools/build/build-fatjar.sh $ARTIFACT_NAME
+
+deploy:
+  provider: script
+  script: ./ci-tools/build/upload-image.sh $ARTIFACT_NAME
