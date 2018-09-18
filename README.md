@@ -10,6 +10,7 @@
 Perusesimerkkejä:
 
 - [konfo-backend](https://github.com/Opetushallitus/konfo-backend/blob/e7a6f10de3abbe2a99b8075a8093883b765f980e/.travis.yml#L21-L34): Yksi fatjar, yksi kontti-image
+- [hakurekisteri](https://github.com/Opetushallitus/hakurekisteri/blob/9bdbb707f281e2d40df8f5c726a443763b0b2c4c/.travis.yml#L7-L16): Postgre-tietokanta testejä varten
 
 Erikoistapauksia:
 
