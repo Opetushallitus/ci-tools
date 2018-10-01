@@ -107,7 +107,10 @@ if [ -f "${STANDALONE_JAR}" ]; then
         JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=${LOGPATH}/logback-liiteri.xml"
     elif [ ${NAME} == "virkailijan-tyopoyta" ]; then
         JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=${HOME}/oph-configuration/logback.xml"
+    elif [ ${NAME} == "oti" ]; then
+        JAVA_OPTS="$JAVA_OPTS"
     else
+        # at least hakuperusteet seems to need this
         JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=${LOGPATH}/logback-standalone.xml"
     fi
     JAVA_OPTS="$JAVA_OPTS -Dcom.sun.management.jmxremote"
