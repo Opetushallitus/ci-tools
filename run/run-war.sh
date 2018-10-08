@@ -9,7 +9,9 @@ CERT="${CONFIGPATH}/cert/ssl.pem"
 LOGPATH="${CONFIGPATH}/log"
 
 echo "Downloading environment-specific properties"
-aws s3 cp s3://${ENV_BUCKET}/services/latest/ ${CONFIGPATH}/ --recursive --exclude "templates/*"
+env_config_path=${ENV_CONFIG_S3_PATH:-/services/}
+env_config_version=${ENV_CONFIG_VERSION:-latest}
+aws s3 cp s3://${ENV_BUCKET}${env_config_path}${env_config_version}/ ${CONFIGPATH}/ --recursive --exclude "templates/*"
 cp -vr ${CONFIGPATH}/* ${BASEPATH}/oph-configuration/
 cp -v ${LOGPATH}/logback-access.xml ${CATALINA_BASE}/conf/
 
