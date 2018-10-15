@@ -1,18 +1,22 @@
+:warning: **Warning:** This repository is public, do not put secrets in these files!
 
 # CI tools
 
-- **build:** Docker-kontin buildaamiseen liittyvät skriptit ja Dockerfilet. Näistä voi olla useita variantteja.
-- **common:** Kaikille buildeille yleisiä CI-skriptejä mm. ECR-kirjautumiseen ja AWS-työkalujen asentamiseen.
-- **run:** Kontin sisään kopioitavat sovelluksen käynnistävät run-skriptit
+This repository contains helper scripts that are downloaded and executed during the builds. Used to unify the build process of dozens of services.
 
-## Käyttöesimerkkejä
+- **build:** Scripts and Dockerfiles for producing a container image. Several variants for different use cases.
+- **common:** Scripts common for all builds, for logging in to ECR, install AWS tools etc.
+- **run:** Scripts that are copied inside the container image, the ones that are invoked when the container is run.
 
-Perusesimerkkejä:
+## Usage examples
 
-- [konfo-backend](https://github.com/Opetushallitus/konfo-backend/blob/e7a6f10de3abbe2a99b8075a8093883b765f980e/.travis.yml#L21-L34): Yksi fatjar, yksi kontti-image
-- [hakurekisteri](https://github.com/Opetushallitus/hakurekisteri/blob/9bdbb707f281e2d40df8f5c726a443763b0b2c4c/.travis.yml#L7-L16): Postgre-tietokanta testejä varten
+Basic use cases:
 
-Erikoistapauksia:
+- [konfo-backend](https://github.com/Opetushallitus/konfo-backend/blob/bec81fdee21ed6df1d5e3b34cde0ccf039bcac2a/.travis.yml): Single (clojure) fatjar in a single container image
+- [hakurekisteri](https://github.com/Opetushallitus/hakurekisteri/blob/9bdbb707f281e2d40df8f5c726a443763b0b2c4c/.travis.yml#L7-L16): Postgre database for unit tests
 
-- [tarjonta](https://github.com/Opetushallitus/tarjonta/blob/ee227a485b64d1bdae2144c64cd81420ef825d14/.travis.yml#L17-L53): Buildi joka tuottaa yhden kontin jonka sisällä on useampi war, sekä api-artifaktin Artifactoryyn.
-- [haku](https://github.com/Opetushallitus/haku/blob/a3a9340620a17870c9d4deed01b53bf90f7f2856/.travis.yml#L41-L56): Kaksi kontti-imagea samasta buildistä.
+Special cases:
+
+- [tarjonta](https://github.com/Opetushallitus/tarjonta/blob/ee227a485b64d1bdae2144c64cd81420ef825d14/.travis.yml#L17-L53): A build that provides one container image that contains several war files, as well as uploads an API artifact into Artifactory.
+- [haku](https://github.com/Opetushallitus/haku/blob/a3a9340620a17870c9d4deed01b53bf90f7f2856/.travis.yml#L41-L56): Two container images from the same build.
+- [ataru](https://github.com/Opetushallitus/ataru/blob/c85ffbce977086aeb05655db8aaf89322f4dbc56/.travis.yml): Two container images from the same build.
