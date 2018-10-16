@@ -45,6 +45,12 @@ mkdir -p /root/logs
 mkdir -p /root/tomcat
 ln -s /root/logs/ /root/tomcat/logs
 
+# PP-299: This symlink is for backwards-compatibility and can be removed once no services use base-legacy image
+if [ -f "/root/jmx_prometheus_javaagent-0.10.jar" ]; then
+  echo "Found legacy jmx_exporter, symlinking it to a versionless name"
+  ln -s /root/jmx_prometheus_javaagent-0.10.jar /root/jmx_prometheus_javaagent.jar
+fi
+
 echo "Starting Prometheus node_exporter..."
 nohup /root/node_exporter > /root/node_exporter.log  2>&1 &
 
@@ -134,7 +140,7 @@ if [ -f "${STANDALONE_JAR}" ]; then
     JAVA_OPTS="$JAVA_OPTS -XX:HeapDumpPath=${LOGS}/${NAME}_heap_dump-`date +%Y-%m-%d`.hprof"
     JAVA_OPTS="$JAVA_OPTS -XX:ErrorFile=${LOGS}/${NAME}_hs_err.log"
     JAVA_OPTS="$JAVA_OPTS -D${NAME}.properties=${HOME}/oph-configuration/${NAME}.properties"
-    JAVA_OPTS="$JAVA_OPTS -javaagent:/root/jmx_prometheus_javaagent-0.10.jar=1134:/root/prometheus.yaml"
+    JAVA_OPTS="$JAVA_OPTS -javaagent:/root/jmx_prometheus_javaagent.jar=1134:/root/prometheus.yaml"
     JAVA_OPTS="$JAVA_OPTS ${SECRET_JAVA_OPTS}"
     JAVA_OPTS="$JAVA_OPTS ${STANDALONE_DEBUG_PARAMS}"
     echo "java ${JAVA_OPTS} -jar ${STANDALONE_JAR}" > /root/java-cmd.txt
