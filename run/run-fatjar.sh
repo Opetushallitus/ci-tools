@@ -4,7 +4,6 @@
 BASEPATH="/root"
 CONFIGPATH="/etc/oph-environment"
 VARS="${CONFIGPATH}/opintopolku.yml"
-CATALINA_BASE="/opt/tomcat/"
 CERT="${CONFIGPATH}/cert/ssl.pem"
 LOGPATH="${CONFIGPATH}/log"
 
@@ -13,7 +12,6 @@ env_config_path=${ENV_CONFIG_S3_PATH:-/services/}
 env_config_version=${ENV_CONFIG_VERSION:-latest}
 aws s3 cp s3://${ENV_BUCKET}${env_config_path}${env_config_version}/ ${CONFIGPATH}/ --recursive --exclude "templates/*"
 cp -vr ${CONFIGPATH}/* ${BASEPATH}/oph-configuration/
-cp -v ${LOGPATH}/logback-access.xml ${CATALINA_BASE}/conf/
 
 echo "Overwriting with AWS-specific configs..."
 for AWS_TEMPLATE in `find ${BASEPATH}/ -name "*.template.aws"`
@@ -42,8 +40,6 @@ export LC_CTYPE=fi_FI.UTF-8
 export JAVA_TOOL_OPTIONS='-Dfile.encoding=UTF-8'
 export JMX_PORT=1133
 mkdir -p /root/logs
-mkdir -p /root/tomcat
-ln -s /root/logs/ /root/tomcat/logs
 
 # PP-299: This symlink is for backwards-compatibility and can be removed once no services use base-legacy image
 if [ -f "/root/jmx_prometheus_javaagent-0.10.jar" ]; then
