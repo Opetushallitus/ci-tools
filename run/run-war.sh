@@ -89,7 +89,7 @@ JAVA_OPTS="$JAVA_OPTS
   -Dcom.sun.management.jmxremote.rmi.port=${JMX_PORT}
   -Dcom.sun.management.jmxremote.local.only=false
   -Djava.rmi.server.hostname=localhost
-  -javaagent:/root/jmx_prometheus_javaagent-0.10.jar=1134:/root/prometheus.yaml
+  -javaagent:/root/jmx_prometheus_javaagent.jar=1134:/root/prometheus.yaml
   -XX:+PrintGCDetails
   -XX:+PrintGCTimeStamps
   -Xloggc:/root/logs/tomcat_gc.log
