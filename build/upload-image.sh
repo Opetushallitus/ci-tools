@@ -7,11 +7,12 @@ export DOCKER_TARGET="${ECR_REPO}/${ARTIFACT_NAME}:${BUILD_ID}"
 echo "Uploading Docker image ${DOCKER_TARGET} to repository"
 docker push ${DOCKER_TARGET}
 
-if [ ${TRAVIS_BRANCH} == "master" ]; then
-  export MASTER_BRANCH_TAG="${ECR_REPO}/${ARTIFACT_NAME}:latest-master"
-  echo "We are in ${TRAVIS_BRANCH} branch, adding extra tag"
-  docker tag ${DOCKER_TARGET} ${MASTER_BRANCH_TAG}
-  docker push ${MASTER_BRANCH_TAG}
+if [ $# -eq 2 ]; then
+  ADDITIONAL_TAG=$2
+  ADDITIONAL_TARGET="${ECR_REPO}/${ARTIFACT_NAME}:${ADDITIONAL_TAG}"
+  echo "Adding additional tag $ADDITIONAL_TAG"
+  docker tag ${DOCKER_TARGET} ${ADDITIONAL_TARGET}
+  docker push ${ADDITIONAL_TARGET}
 fi
 
 echo "Updating build metadata to DynamoDB"
