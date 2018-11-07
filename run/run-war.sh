@@ -103,7 +103,7 @@ JAVA_OPTS="$JAVA_OPTS
 "
 SETENV
     case ${NAME} in
-      koski|sijoittelu-service|valinta|valintaperusteet-service|valintalaskenta|valintalaskentakoostepalvelu)
+      koski|sijoittelu-service|valinta|valintaperusteet-service|valintalaskenta|valintalaskentakoostepalvelu|dokumenttipalvelu|seuranta)
         echo "Skipped project's log4j.properties file."
         ;;
       *)
