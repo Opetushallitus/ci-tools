@@ -97,7 +97,7 @@ JAVA_OPTS="$JAVA_OPTS
   -XX:NumberOfGCLogFiles=10
   -XX:GCLogFileSize=10m
   -XX:+HeapDumpOnOutOfMemoryError
-  -XX:HeapDumpPath=/root/logs/tomcat_heap_dump-`date +%Y-%m-%d`.hprof
+  -XX:HeapDumpPath=/root/dumps/tomcat_heap_dump-`date +%Y-%m-%d-%H-%M-%S`.hprof
   -XX:ErrorFile=/root/logs/tomcat_hs_err.log
   ${DEBUG_PARAMS}
 "
