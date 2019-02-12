@@ -33,7 +33,7 @@ CACERTSPWD="`grep "java_cacerts_pwd" /etc/oph-environment/opintopolku.yml | grep
 if [ -f "${CERT}" ]; then
   echo "Installing local certificates to Java..."
   openssl x509 -outform der -in ${CERT} -out /tmp/ssl.der
-  keytool -import -noprompt -storepass ${CACERTSPWD} -alias opintopolku -keystore /usr/java/latest/jre/lib/security/cacerts -file /tmp/ssl
+  keytool -import -noprompt -storepass ${CACERTSPWD} -alias opintopolku -keystore /opt/java/openjdk/lib/security/cacerts -file /tmp/ssl
 fi
 
 export LC_CTYPE=fi_FI.UTF-8
@@ -74,7 +74,7 @@ if [ -f "${STANDALONE_JAR}" ]; then
       YTLCERT="${CONFIGPATH}/suoritusrekisteri/ytlqa.crt"
       if [ -f "${YTLCERT}" ]; then
             echo "Installing YTL certificate for suoritusrekisteri"
-            keytool -import -noprompt -trustcacerts -alias ytl_qa_cert -storepass ${CACERTSPWD} -keystore /usr/java/latest/jre/lib/security/cacerts -file ${YTLCERT}
+            keytool -import -noprompt -trustcacerts -alias ytl_qa_cert -storepass ${CACERTSPWD} -keystore /opt/java/openjdk/lib/security/cacerts -file ${YTLCERT}
         else
             echo "YTL test certificate not found"
       fi
