@@ -35,7 +35,7 @@ CACERTSPWD="`grep "java_cacerts_pwd" /etc/oph-environment/opintopolku.yml | grep
 if [ -f "${CERT}" ]; then
   echo "Installing local certificates to Java..."
   openssl x509 -outform der -in ${CERT} -out /tmp/ssl.der
-  keytool -import -noprompt -storepass ${CACERTSPWD} -alias opintopolku -keystore /usr/java/latest/jre/lib/security/cacerts -file /tmp/ssl
+  keytool -import -noprompt -storepass ${CACERTSPWD} -alias opintopolku -keystore /opt/java/openjdk/lib/security/cacerts -file /tmp/ssl
 fi
 
 export LC_CTYPE=fi_FI.UTF-8
@@ -64,6 +64,9 @@ else
   DEBUG_PARAMS=""
 fi
 
+export HOME="/root"
+export LOGS="${HOME}/logs"
+
 echo "Using java options: ${JAVA_OPTS}"
 echo "Using secret java options: ${SECRET_JAVA_OPTS}"
 
@@ -90,12 +93,7 @@ JAVA_OPTS="$JAVA_OPTS
   -Dcom.sun.management.jmxremote.local.only=false
   -Djava.rmi.server.hostname=localhost
   -javaagent:/root/jmx_prometheus_javaagent.jar=1134:/root/prometheus.yaml
-  -XX:+PrintGCDetails
-  -XX:+PrintGCTimeStamps
-  -Xloggc:/root/logs/tomcat_gc.log
-  -XX:+UseGCLogFileRotation
-  -XX:NumberOfGCLogFiles=10
-  -XX:GCLogFileSize=10m
+  -Xlog:gc*:file=${LOGS}/${NAME}_gc.log:uptime:filecount=10,filesize=10m
   -XX:+HeapDumpOnOutOfMemoryError
   -XX:HeapDumpPath=/root/dumps/tomcat_heap_dump-`date +%Y-%m-%d-%H-%M-%S`.hprof
   -XX:ErrorFile=/root/logs/tomcat_hs_err.log
