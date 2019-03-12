@@ -7,14 +7,8 @@ ARTIFACT_DEST_PATH="/opt/tomcat/webapps/"
 
 find ${DOCKER_BUILD_DIR}
 
-if [[ $BASE_IMAGE != *"base-legacy"* ]]; then
-    echo "Using run script from base image"
-    cp ci-tools/build/Dockerfile ${DOCKER_BUILD_DIR}/Dockerfile
-    sed -i -e "s|BASEIMAGE|${ECR_REPO}/${BASE_IMAGE}|g" ${DOCKER_BUILD_DIR}/Dockerfile
-    docker build --build-arg name=${ARTIFACT_NAME} --build-arg artifact_destination=${ARTIFACT_DEST_PATH} -t ${DOCKER_TARGET} ${DOCKER_BUILD_DIR}
-else
-    echo "Warning: You are using the deprecated base-legacy image. Update your .travis.yml to use a new baseimage."
-    travis_terminate 1
-fi
+cp ci-tools/build/Dockerfile ${DOCKER_BUILD_DIR}/Dockerfile
+sed -i -e "s|BASEIMAGE|${ECR_REPO}/${BASE_IMAGE}|g" ${DOCKER_BUILD_DIR}/Dockerfile
+docker build --build-arg name=${ARTIFACT_NAME} --build-arg artifact_destination=${ARTIFACT_DEST_PATH} -t ${DOCKER_TARGET} ${DOCKER_BUILD_DIR}
 
 docker images
