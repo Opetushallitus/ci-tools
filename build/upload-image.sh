@@ -12,7 +12,8 @@ if [[ $PREVIOUS_BUILD_ID == $BUILD_ID ]]; then
   echo "Found existing build with same ID, this seems to be a rebuild!"
   echo "Do NOT click the 'Restart build' button in Travis CI under a previous build."
   echo "Either git push a new commit, or select 'Trigger build'."
-  overwriting_existing_images_is_not_allowed
+  echo "Overwriting existing images it no allowed."
+  exit 2
 else
   echo "Uploading Docker image ${DOCKER_TARGET} to repository"
   docker push ${DOCKER_TARGET}
