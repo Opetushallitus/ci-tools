@@ -15,4 +15,7 @@ EXPOSE 8080
 
 ENV NAME $name
 
+# Ensure no setuid / setgid binaries exist
+RUN find / -xdev -perm +6000 -type f -exec chmod a-s {} \; || true
+
 CMD ["sh", "/tmp/scripts/run"]
