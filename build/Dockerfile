@@ -3,9 +3,7 @@ FROM BASEIMAGE
 ARG name
 ARG artifact_destination
 
-WORKDIR /root
-
-ADD config/ /root
+ADD config/ /etc/oph
 ADD artifact/ $artifact_destination
 
 RUN apk add tzdata
@@ -18,4 +16,7 @@ ENV NAME $name
 # Ensure no setuid / setgid binaries exist
 RUN find / -xdev -perm +6000 -type f -exec chmod a-s {} \; || true
 
-CMD ["sh", "/tmp/scripts/run"]
+WORKDIR /home/oph
+USER oph
+
+CMD ["sh", "/usr/local/bin/run"]
