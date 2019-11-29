@@ -19,4 +19,4 @@ RUN find / -xdev -perm +6000 -type f -exec chmod a-s {} \; || true
 WORKDIR /home/oph
 USER oph
 
-CMD ["bash", "/usr/local/bin/run"]
+CMD ["/usr/local/bin/run"]
