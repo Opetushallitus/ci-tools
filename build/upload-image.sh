@@ -31,9 +31,13 @@ else
       docker push ${ADDITIONAL_TARGET}
     fi
 
+    export BASEIMAGE_TYPE=$(docker inspect ${DOCKER_TARGET} --format="{{ .ContainerConfig.Labels.BaseimageType }}")
+    export BASEIMAGE_BUILDNUMBER=$(docker inspect ${DOCKER_TARGET} --format="{{ .ContainerConfig.Labels.BaseimageBuildNumber }}")
+    export BASEIMAGE_BUILDTIME=$(docker inspect ${DOCKER_TARGET} --format="{{ .ContainerConfig.Labels.BaseimageBuildTime }}")
+
     echo "Updating build metadata to DynamoDB"
     export BUILD_TIMESTAMP=`TZ='Europe/Helsinki' date +'%Y-%m-%d %H:%M:%S %Z'`
-    aws dynamodb put-item --table-name builds --item "{\"Service\": {\"S\": \"${ARTIFACT_NAME}\"}, \"Build\": {\"S\": \"${BUILD_ID}\"}, \"Branch\": {\"S\": \"${TRAVIS_BRANCH}\"}, \"Commit\": {\"S\": \"${TRAVIS_COMMIT}\"}, \"Time\": {\"S\": \"${BUILD_TIMESTAMP}\"}}" --condition-expression "attribute_not_exists(Id)" --region eu-west-1
+    aws dynamodb put-item --table-name builds --item "{\"Service\": {\"S\": \"${ARTIFACT_NAME}\"}, \"Build\": {\"S\": \"${BUILD_ID}\"}, \"Branch\": {\"S\": \"${TRAVIS_BRANCH}\"}, \"Commit\": {\"S\": \"${TRAVIS_COMMIT}\"}, \"Time\": {\"S\": \"${BUILD_TIMESTAMP}\"}, \"BaseimageType\": {\"S\": \"${BASEIMAGE_TYPE}\"}, \"BaseimageBuildNumber\": {\"S\": \"${BASEIMAGE_BUILDNUMBER}\"}, \"BaseimageBuildTime\": {\"S\": \"${BASEIMAGE_BUILDTIME}\"}}" --condition-expression "attribute_not_exists(Id)" --region eu-west-1
 
     echo "Finished uploading image"
 
