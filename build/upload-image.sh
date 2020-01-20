@@ -1,13 +1,22 @@
 #!/bin/bash -e
+export ARTIFACT_NAME=$1
+export BUILD_ID="ci-${TRAVIS_BUILD_NUMBER}"
+export DOCKER_TARGET="${ECR_REPO}/${ARTIFACT_NAME}:${BUILD_ID}"
 
-if [ "${TRAVIS_EVENT_TYPE}" = "cron" ]
-then
+dynamo_write () {
+  echo "Updating build metadata to DynamoDB"
+  export BUILD_TIMESTAMP=`TZ='Europe/Helsinki' date +'%Y-%m-%d %H:%M:%S %Z'`
+  aws dynamodb put-item --table-name builds --item "{\"Service\": {\"S\": \"${ARTIFACT_NAME}\"}, \"Build\": {\"S\": \"${BUILD_ID}\"}, \"Branch\": {\"S\": \"${TRAVIS_BRANCH}\"}, \"Commit\": {\"S\": \"${TRAVIS_COMMIT}\"}, \"Time\": {\"S\": \"${BUILD_TIMESTAMP}\"}}" --condition-expression "attribute_not_exists(Id)" --region eu-west-1
+}
+
+if [[ $@ == *--dynamo-write* ]]; then
+  dynamo_write
+  exit $?
+fi
+
+if [ "${TRAVIS_EVENT_TYPE}" = "cron" ]; then
   echo "Image push skipped (scheduled build)"
 else
-
-  export ARTIFACT_NAME=$1
-  export BUILD_ID="ci-${TRAVIS_BUILD_NUMBER}"
-  export DOCKER_TARGET="${ECR_REPO}/${ARTIFACT_NAME}:${BUILD_ID}"
 
   echo "Checking that build metadata must not already exist with build ID ${BUILD_ID}."
   PREVIOUS_BUILD=$(aws dynamodb get-item --table-name builds --key "{\"Service\": {\"S\": \"$ARTIFACT_NAME\"}, \"Build\": {\"S\": \"$BUILD_ID\"}}" --output json --region eu-west-1)
@@ -23,7 +32,7 @@ else
     echo "Uploading Docker image ${DOCKER_TARGET} to repository"
     docker push ${DOCKER_TARGET}
 
-    if [ $# -eq 2 ]; then
+    if [[ $# -eq 2 && $2 != --skip-dynamo-write ]]; then
       ADDITIONAL_TAG=$2
       ADDITIONAL_TARGET="${ECR_REPO}/${ARTIFACT_NAME}:${ADDITIONAL_TAG}"
       echo "Adding additional tag $ADDITIONAL_TAG"
@@ -31,11 +40,10 @@ else
       docker push ${ADDITIONAL_TARGET}
     fi
 
-    echo "Updating build metadata to DynamoDB"
-    export BUILD_TIMESTAMP=`TZ='Europe/Helsinki' date +'%Y-%m-%d %H:%M:%S %Z'`
-    aws dynamodb put-item --table-name builds --item "{\"Service\": {\"S\": \"${ARTIFACT_NAME}\"}, \"Build\": {\"S\": \"${BUILD_ID}\"}, \"Branch\": {\"S\": \"${TRAVIS_BRANCH}\"}, \"Commit\": {\"S\": \"${TRAVIS_COMMIT}\"}, \"Time\": {\"S\": \"${BUILD_TIMESTAMP}\"}}" --condition-expression "attribute_not_exists(Id)" --region eu-west-1
-
-    echo "Finished uploading image"
+    if [[ $@ != *--skip-dynamo-write* ]]; then
+      dynamo_write
+      echo "Finished uploading image"
+    fi
 
   fi
 fi
