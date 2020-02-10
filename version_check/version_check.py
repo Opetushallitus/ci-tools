@@ -8,9 +8,7 @@ import os
 def get_latest_release(repository_name):
     try:
         repository = g.get_repo(repository_name)
-        latest_release_raw = repository.get_releases()[0].tag_name
-        latest_release = re.search('[0-9].*', latest_release_raw)[0]
-        return latest_release
+        return repository.get_latest_release().tag_name
     except Exception as e:
         print(e)
 
