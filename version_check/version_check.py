@@ -40,17 +40,17 @@ def get_outdated_ext_packages(packages):
     return {package: properties for (package, properties) in packages.items() if properties['current_version'] != properties['latest_version']}
 
 
-def send_message(repository_slug, base_image_branch, flow_token, outdated_ext_packages, apk_packages_updated):
+def send_message(repository_slug, repository_branch, flow_token, outdated_ext_packages, distro_packages_updated, distro):
     message_content = [
-        f"Report for {repository_slug} ({base_image_branch})\n\n"]
-    message_content.append("Alpine packages are outdated, new base image will be built\n\n") if apk_packages_updated else message_content.append(
-        "Alpine packages are up to date\n\n")
+        f"Report for {repository_slug} ({repository_branch})\n\n"]
+    message_content.append(f'{distro} packages are outdated, new {repository_slug} image will be built\n\n') if distro_packages_updated else message_content.append(
+        f"{distro} packages are up to date\n\n")
     if outdated_ext_packages:
         message_content.append('Outdated external packages:\n')
         for package_name, properties in outdated_ext_packages.items():
             message_content.append(
                 f'{package_name}\nInstalled: {properties["current_version"]}\nLatest: {properties["latest_version"]}\n\n')
-    else:
+    elif distro.lower() == "alpine":
         message_content.append('All external packages are up to date')
 
     flow_payload = {
@@ -60,18 +60,21 @@ def send_message(repository_slug, base_image_branch, flow_token, outdated_ext_pa
     }
 
     print(''.join(message_content))
-    r = requests.post('https://api.flowdock.com/messages', json=flow_payload)
+    requests.post('https://api.flowdock.com/messages', json=flow_payload)
 
 
 if __name__ == "__main__":
     github_token = os.environ.get('GITHUB_TOKEN')
     flow_token = os.environ.get('FLOW_TOKEN')
     repository_slug = os.environ.get('TRAVIS_REPO_SLUG')
-    base_image_branch = os.environ.get('TRAVIS_BRANCH')
+    repository_branch = os.environ.get('TRAVIS_BRANCH')
     repository_path = os.environ.get('TRAVIS_BUILD_DIR')
+    with open('distro') as f:
+        distro = f.read().strip().capitalize()
     repo = Repo(repository_path)
     g = Github(github_token)
-    print(f'Working on repository:{repository_slug} branch: {base_image_branch} in path: {repository_path}')
+    print(
+        f'Working on repository: {repository_slug} branch: {repository_branch} in path: {repository_path}')
 
     ext_packages = {
         'GNU C Library': {
@@ -89,16 +92,19 @@ if __name__ == "__main__":
     }
 
     outdated_ext_packages = get_outdated_ext_packages(
-        get_versions(ext_packages, repo.working_tree_dir))
-    apk_packages_updated = False
-    apk_versions_file = os.path.join(repo.working_tree_dir, 'package-versions')
-    if repo.is_dirty(path=apk_versions_file):
+        get_versions(ext_packages, repo.working_tree_dir)) if distro.lower() == "alpine" else False
+    distro_packages_updated = False
+    distro_versions_file = os.path.join(
+        repo.working_tree_dir, 'package-versions')
+    if repo.is_dirty(path=distro_versions_file):
         author = Actor("oph-ci", "noreply@opintopolku.fi")
         repo.delete_remote('origin')
-        repo.create_remote('origin', url=f'https://oph-ci:{github_token}@github.com/{repository_slug}.git')
+        repo.create_remote(
+            'origin', url=f'https://oph-ci:{github_token}@github.com/{repository_slug}.git')
         repo.index.add(['package-versions'])
-        repo.index.commit('Update Alpine packages', author=author)
-        print(repo.remotes.origin.push(refspec=f'{base_image_branch}:{base_image_branch}')[0].summary)
-        apk_packages_updated = True
-    send_message(repository_slug, base_image_branch, flow_token,
-                 outdated_ext_packages, apk_packages_updated)
+        repo.index.commit(f'Update {distro} packages', author=author)
+        print(repo.remotes.origin.push(
+            refspec=f'{repository_branch}:{repository_branch}')[0].summary)
+        distro_packages_updated = True
+    send_message(repository_slug, repository_branch, flow_token,
+                 outdated_ext_packages, distro_packages_updated, distro)

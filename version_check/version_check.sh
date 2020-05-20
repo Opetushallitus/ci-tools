@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-if [ "${TRAVIS_EVENT_TYPE}" = "cron" ]
-then
-  docker run -v ${TRAVIS_BUILD_DIR}:/repository ${DOCKER_TARGET} /bin/sh -c "apk info -v | sort > /repository/package-versions && chmod 755 /repository/package-versions"
+if [ "${TRAVIS_EVENT_TYPE}" = "cron" ]; then
+  docker run -u root -v ${TRAVIS_BUILD_DIR}:/repository ${DOCKER_TARGET} /repository/ci-tools/version_check/package_versions.sh
   git diff ${TRAVIS_BUILD_DIR}/package-versions
   git checkout ${TRAVIS_BRANCH}
   sudo apt-get update
