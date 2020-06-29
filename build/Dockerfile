@@ -14,7 +14,7 @@ EXPOSE 8080
 ENV NAME $name
 
 # Ensure no setuid / setgid binaries exist
-RUN find / -xdev -perm +6000 -type f -exec chmod a-s {} \; || true
+RUN find / -xdev -perm +6000 -type f -not -name sudo -exec chmod a-s {} \; || true
 
 WORKDIR /home/oph
 USER oph
