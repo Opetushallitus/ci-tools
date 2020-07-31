@@ -5,7 +5,7 @@ import psutil
 import requests
 import subprocess
 import time
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from werkzeug.exceptions import HTTPException
 
 client = boto3.client('ssm', region_name='eu-west-1')
@@ -59,14 +59,15 @@ def clear_agent_configuration():
                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def wait_for_managed_instance_online(managed_instance_name, retry_wait_time, retry_count):
+def wait_for_managed_instance_online(managed_instance_name, timeout):
+    retry_count = int(timeout / 10)
     for _ in range(retry_count):
         managed_instance_id = describe_container_managed_instance(managed_instance_name)[
             'InstanceId']
         if client.get_connection_status(Target=managed_instance_id)['Status'] == 'connected':
             return True
         else:
-            time.sleep(retry_wait_time)
+            time.sleep(10)
     return False
 
 
@@ -82,6 +83,10 @@ def handle_exception(e):
 
 @app.route('/start-ssm-agent', methods=['PUT'])
 def start_ssm_agent():
+    if not request.json or not 'timeout' in request.json:
+        timeout = 120
+    else:
+        timeout = int(request.json.get('timeout'))
     container_metadata = requests.get(metadata_uri).json()
     managed_instance_name = f'{container_metadata["DockerId"]}-{container_metadata["DockerName"]}'
     managed_instance_info = describe_container_managed_instance(
@@ -103,7 +108,7 @@ def start_ssm_agent():
 
     start_agent_process()
 
-    if wait_for_managed_instance_online(managed_instance_name, 5, 5):
+    if wait_for_managed_instance_online(managed_instance_name, timeout):
         return {
             'instance_id': describe_container_managed_instance(managed_instance_name)['InstanceId']
         }
