@@ -12,7 +12,7 @@ sed -i -e "s|BASEIMAGE|${ECR_REPO}/${BASE_IMAGE}|g" ${DOCKER_BUILD_DIR}/Dockerfi
 
 if [ "$(ls -A $DOCKER_BUILD_DIR/artifact/*.war)" ]; then 
   for artifact in $DOCKER_BUILD_DIR/artifact/*.war; do 
-    unzip -d "$DOCKER_BUILD_DIR/artifact/$(basename $artifact .war)" $artifact
+    unzip -qd "$DOCKER_BUILD_DIR/artifact/$(basename $artifact .war)" $artifact
     rm -f $artifact
   done
 fi
