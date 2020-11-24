@@ -40,10 +40,10 @@ def get_outdated_ext_packages(packages):
     return {package: properties for (package, properties) in packages.items() if properties['current_version'] != properties['latest_version']}
 
 
-def send_message(repository_slug, repository_branch, flow_token, outdated_ext_packages, distro_packages_updated, distro):
+def send_message(repository_slug, repository_branch, flow_token, outdated_ext_packages, distro_packages_updated, updated_packages_list, distro, nginx):
     message_content = [
         f"Report for {repository_slug} ({repository_branch})\n\n"]
-    message_content.append(f'{distro} packages are outdated, new {repository_slug} image will be built\n\n') if distro_packages_updated else message_content.append(
+    message_content.append(f'{distro} packages are outdated, new {repository_slug} image will be built\nFollowing packages will be updated:\n{updated_packages_list}\n\n') if distro_packages_updated else message_content.append(
         f"{distro} packages are up to date\n\n")
     if outdated_ext_packages:
         message_content.append('Outdated external packages:\n')
@@ -52,6 +52,8 @@ def send_message(repository_slug, repository_branch, flow_token, outdated_ext_pa
                 f'{package_name}\nInstalled: {properties["current_version"]}\nLatest: {properties["latest_version"]}\n\n')
     elif distro.lower() == "alpine":
         message_content.append('All external packages are up to date')
+    if nginx != "":
+        message_content.append(f'{nginx}\n')
 
     flow_payload = {
         'flow_token': flow_token,
@@ -94,8 +96,24 @@ if __name__ == "__main__":
     outdated_ext_packages = get_outdated_ext_packages(
         get_versions(ext_packages, repo.working_tree_dir)) if distro.lower() == "alpine" else False
     distro_packages_updated = False
+    updated_packages_list=""
+    nginx=""
+
     distro_versions_file = os.path.join(
         repo.working_tree_dir, 'package-versions')
+    nginx_update_file = os.path.join(
+        repo.working_tree_dir, 'nginx-updates')
+    updated_packages = os.path.join(
+        repo.working_tree_dir, 'updated-packages')
+
+    if os.path.isfile(nginx_update_file):
+        with open (nginx_update_file, "r") as nginx_file:
+            nginx = nginx_file.read()
+
+    if os.path.isfile(updated_packages):
+        with open (updated_packages, "r") as updated_packages_file:
+            updated_packages_list = updated_packages_file.read()
+
     if repo.is_dirty(path=distro_versions_file):
         author = Actor("oph-ci", "noreply@opintopolku.fi")
         repo.delete_remote('origin')
@@ -107,4 +125,4 @@ if __name__ == "__main__":
             refspec=f'{repository_branch}:{repository_branch}')[0].summary)
         distro_packages_updated = True
     send_message(repository_slug, repository_branch, flow_token,
-                 outdated_ext_packages, distro_packages_updated, distro)
+                 outdated_ext_packages, distro_packages_updated, updated_packages_list, distro, nginx)
