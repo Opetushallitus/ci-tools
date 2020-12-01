@@ -6,7 +6,7 @@ case "$ID" in
 alpine) PACKAGES=$(apk info -v | sort) ;;
 ubuntu) PACKAGES=$(apt list --installed | awk '{ print $1, $2 }' | sort)
         NGINX=$(apt list --upgradeable nginx-extras || true)
-	NGINX=$(echo "${NGINX}"| grep -v Listing... || true)
+      	NGINX=$(echo "${NGINX}"| grep -v Listing... || true)
 ;;
 esac
 
