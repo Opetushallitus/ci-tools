@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 export ARTIFACT_NAME=$1
-export BUILD_ID="gh-${github.run_number}"
+export BUILD_ID="ga-${GITHUB_RUN_NUMBER}"
 export DOCKER_TARGET="${ECR_REPO}/${ARTIFACT_NAME}:${BUILD_ID}"
 ARTIFACT_DEST_PATH="/opt/tomcat/webapps/"
 
