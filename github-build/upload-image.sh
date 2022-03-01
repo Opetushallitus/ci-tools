@@ -14,7 +14,7 @@ if [[ $@ == *--dynamo-write* ]]; then
   exit $?
 fi
 
-if [ "${github.event_name}" = "schedule" ]; then
+if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
   echo "Image push skipped (scheduled build)"
 else
 
