@@ -6,7 +6,7 @@ export DOCKER_TARGET="${ECR_REPO}/${ARTIFACT_NAME}:${BUILD_ID}"
 dynamo_write () {
   echo "Updating build metadata to DynamoDB"
   export BUILD_TIMESTAMP=`TZ='Europe/Helsinki' date +'%Y-%m-%d %H:%M:%S %Z'`
-  if [ "$GITHUB_HEAD_REF" = "" ]; then BRANCH="$GITHUB_REF_NAME"; else BRANCH="$GITHUB_HEAD_REF>$GITHUB_BASE_REF"; fi
+  if [ -z "$GITHUB_HEAD_REF" ]; then BRANCH="$GITHUB_REF_NAME"; else BRANCH="$GITHUB_HEAD_REF>$GITHUB_BASE_REF"; fi
   aws dynamodb put-item --table-name builds --item "{\"Service\": {\"S\": \"${ARTIFACT_NAME}\"}, \"Build\": {\"S\": \"${BUILD_ID}\"}, \"Branch\": {\"S\": \"${BRANCH}\"}, \"Commit\": {\"S\": \"${GITHUB_SHA}\"}, \"Time\": {\"S\": \"${BUILD_TIMESTAMP}\"}}" --condition-expression "attribute_not_exists(Id)" --region eu-west-1
 }
 
