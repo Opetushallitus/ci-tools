@@ -6,7 +6,6 @@ ARG artifact_destination
 ADD config/ /etc/oph
 ADD artifact/ $artifact_destination
 
-RUN apk add tzdata
 RUN ln -sf /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
 
 EXPOSE 8080
