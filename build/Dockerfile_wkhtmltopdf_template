@@ -1,0 +1,52 @@
+FROM surnet/alpine-wkhtmltopdf:3.16.2-0.12.6-small as wkhtmltopdf
+FROM BASEIMAGE
+
+ARG name
+ARG artifact_destination
+
+ADD config/ /etc/oph
+ADD artifact/ $artifact_destination
+
+RUN ln -sf /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
+
+### wkhtmltopdf customization starts
+# Install dependencies for wkhtmltopdf
+RUN apk add --no-cache \
+  libstdc++ \
+  libx11 \
+  libxrender \
+  libxext \
+  libssl1.1 \
+  ca-certificates \
+  fontconfig \
+  freetype \
+  ttf-dejavu \
+  ttf-droid \
+  ttf-freefont \
+  ttf-liberation \
+&& apk add --no-cache --virtual .build-deps \
+  msttcorefonts-installer \
+\
+# Install microsoft fonts
+&& update-ms-fonts \
+&& fc-cache -f \
+\
+# Clean up when done
+&& rm -rf /tmp/* \
+&& apk del .build-deps
+
+# Copy wkhtmltopdf files from docker-wkhtmltopdf image
+COPY --from=wkhtmltopdf /bin/wkhtmltopdf /bin/wkhtmltopdf
+### wkhtmltopdf customization ends
+
+EXPOSE 8080
+
+ENV NAME $name
+
+# Ensure no setuid / setgid binaries exist
+RUN find / -xdev -perm +6000 -type f -not -name sudo -exec chmod a-s {} \; || true
+
+WORKDIR /home/oph
+USER oph
+
+CMD ["sh", "/usr/local/bin/run"]
