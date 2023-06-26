@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       base-image:
-        description: 'Image used as the base (example: fatjar-openjdk11:master)'
+        description: 'Image used as the base (example: utility/fatjar-openjdk11:master)'
         required: true
         type: string
       configfolder:
@@ -20,7 +20,7 @@ on:
           type: string
           default: '.'
     secrets:
-      AWS_UTILITY_ROLE_ARN:
+      AWS_OPH_UTILITY_ROLE_ARN:
         required: true
 
 env:
@@ -40,6 +40,13 @@ jobs:
       - uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
         with:
           egress-policy: audit
+
+      - uses: actions/cache@v3
+        id: restore-build
+        with:
+          path: |
+            target
+          key: ${{ github.sha }}
 
       - name: Check that there is a .jar file available in target/
         run: |
