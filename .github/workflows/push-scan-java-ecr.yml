@@ -86,7 +86,7 @@ jobs:
         env:
           ECR_REPO: ${{ steps.ecr-login.outputs.registry }}
         run: |
-          curl --create-dirs -O -output-dir $DOCKER_BUILD_DIR/ https://github.com/Opetushallitus/ci-tools/github-build/Dockerfile
+          curl --create-dirs -O -output-dir $DOCKER_BUILD_DIR/ https://raw.githubusercontent.com/Opetushallitus/ci-tools/master/github-build/Dockerfile
           cp -v target/*-jar-with-dependencies.jar $DOCKER_BUILD_DIR/artifact/${{ inputs.application }}.jar
           cp -vr ${{ inputs.configfolder }} $DOCKER_BUILD_DIR/config/
           sed -i -e "s|BASEIMAGE|${ECR_REPO}/${{ inputs.base-image }}|g" ${DOCKER_BUILD_DIR}/Dockerfile
