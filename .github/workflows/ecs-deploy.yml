@@ -1,0 +1,40 @@
+name: Publish service to a certain environment
+
+on: 
+  workflow_call:
+    inputs:
+      application-name:
+        description: 'Name of the application being built (service name in AWS)'
+        required: true
+        type: string
+      environment-name:
+        description: 'Name of the environment where the deployment goes'
+        required: false
+        default: 'pallero'
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      application-name:
+        description: 'Name of the application being built (service name in AWS)'
+        required: true
+        type: string
+      environment-name:
+        description: 'Name of the environment where the deployment goes'
+        required: false
+        default: 'pallero'
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: get user calling the pipeline
+        run: | 
+          echo ${{ github.triggering_actor }}
+          echo ${{ inputs.application-name }}
+          echo ${{ inputs.environment-name }}
+
