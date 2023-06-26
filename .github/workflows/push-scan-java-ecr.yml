@@ -1,0 +1,125 @@
+name: Push java package
+
+on:
+  workflow_call:
+    inputs:
+      application:
+        description: 'Name of the application being built (service name in AWS)'
+        required: true
+        type: string
+      base-image:
+        description: 'Image used as the base (example: fatjar-openjdk11:master)'
+        required: true
+        type: string
+      configfolder:
+        description: 'Location of config which is copied to image'
+        required: true
+        type: string
+      working-directory:
+          required: false
+          type: string
+          default: '.'
+    secrets:
+      AWS_UTILITY_ROLE_ARN:
+        required: true
+
+env:
+  DOCKER_BUILD_DIR: '/tmp/docker_build'
+  ARTIFACT_DEST_PATH: 'usr/local/bin'
+
+jobs:
+  push:
+    name: Push and scan java image
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    if: github.actor != 'dependabot[bot]'
+    steps:
+      - uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
+        with:
+          egress-policy: audit
+
+      - name: Check that there is a .jar file available in target/
+        run: |
+          count=$(find ./target/*-jar-with-dependencies.jar -type f | wc -l)
+          if [ $count -eq 0 ]
+          then
+            exit 1
+          else
+            exit 0
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: ${{ inputs.application }}-push-image
+          aws-region: eu-west-1
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Login to docker with ECR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ steps.ecr-login.outputs.registry }}
+
+      - name: Prepare for build
+        shell: bash
+        env:
+          ECR_REPO: ${{ steps.ecr-login.outputs.registry }}
+        run: |
+          curl --create-dirs -O -output-dir $DOCKER_BUILD_DIR/ https://github.com/Opetushallitus/ci-tools/github-build/Dockerfile
+          cp -v target/*-jar-with-dependencies.jar $DOCKER_BUILD_DIR/artifact/${{ inputs.application }}.jar
+          cp -vr ${{ inputs.configfolder }} $DOCKER_BUILD_DIR/config/
+          sed -i -e "s|BASEIMAGE|${ECR_REPO}/${{ inputs.base-image }}|g" ${DOCKER_BUILD_DIR}/Dockerfile
+          if [ -d "${DOCKER_BUILD_DIR}/native_libs" ]; then sed -i '/^CMD.*/i COPY native_libs/* /usr/lib' ${DOCKER_BUILD_DIR}/Dockerfile; fi
+
+      - name: Docker meta for image
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ steps.ecr-login.outputs.registry }}/utility/${{ inputs.application }}
+          tags: |
+            type=raw,value=ga-${{ github.run_number }}
+            type=raw,value=${{ github.ref_name }}
+
+      - name: Build image
+        id: build-push
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ env.DOCKER_BUILD_DIR }}
+          push: true
+          platforms: linux/amd64, linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            NAME=${{ inputs.application }}
+            ARTIFACT_DESTINATION=${{ env.ARTIFACT_DEST_PATH }}
+
+      - name: Update build metadata
+        shell: bash
+        run: |
+          BUILD_TIMESTAMP=`TZ='Europe/Helsinki' date +'%Y-%m-%d %H:%M:%S %Z'`
+          aws dynamodb put-item --table-name builds --item "{\"Service\": {\"S\": \"${{ inputs.application }}\"}, \"Build\": {\"S\": \"ga-$GITHUB_RUN_NUMBER\"}, \"Branch\": {\"S\": \"$GITHUB_REF_NAME\"}, \"Commit\": {\"S\": \"$GITHUB_SHA\"}, \"Time\": {\"S\": \"$BUILD_TIMESTAMP\"}}" --condition-expression "attribute_not_exists(Id)" --region eu-west-1
+
+      - name: Scan image
+        id: scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref:  ${{ steps.ecr-login.outputs.registry }}/utility/${{ inputs.application }}:ga-${{ github.run_number }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'

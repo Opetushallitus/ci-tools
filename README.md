@@ -4,6 +4,7 @@
 
 This repository contains helper scripts that are downloaded and executed during the builds. Used to unify the build process of dozens of services.
 
+- **.github** Files that should do everything. One for building and pushing the image to ECR and one for deploying a specified or latest version to environment
 - **build:** Scripts and Dockerfiles for producing a container image. Several variants for different use cases.
 - **common:** Scripts common for all builds, for logging in to ECR, install AWS tools etc.
 - **run:** Scripts that are copied inside the container image, the ones that are invoked when the container is run.
