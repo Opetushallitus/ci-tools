@@ -13,7 +13,7 @@ on:
         default: 'pallero'
         type: string
     secrets:
-      AWS_ROLE_ARN:
+      AWS_ENV_ROLE_ARN:
         required: true
   workflow_dispatch:
     inputs:
@@ -34,7 +34,8 @@ jobs:
     steps:
       - name: get user calling the pipeline
         run: | 
-          echo ${{ github.triggering_actor }}
-          echo ${{ inputs.application-name }}
-          echo ${{ inputs.environment-name }}
+          echo "actor: ${{ github.triggering_actor }}"
+          echo "app: ${{ inputs.application-name }}"
+          echo "env: ${{ inputs.environment-name }}"
+          echo "commit: ${{ github.sha }}"
 

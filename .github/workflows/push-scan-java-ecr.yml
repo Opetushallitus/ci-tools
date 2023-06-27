@@ -30,7 +30,7 @@ on:
         type: string
         default: '.'
     secrets:
-      AWS_OPH_UTILITY_ROLE_ARN:
+      AWS_UTILITY_ROLE_ARN:
         required: true
 
 env:
@@ -81,7 +81,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_UTILITY_ROLE_ARN }}
           role-session-name: ${{ inputs.application }}-push-image
           aws-region: eu-west-1
 
