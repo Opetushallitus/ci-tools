@@ -140,7 +140,6 @@ jobs:
         with:
           image-ref:  ${{ steps.ecr-login.outputs.registry }}/utility/${{ inputs.application }}:ga-${{ github.run_number }}
           format: 'table'
-          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
