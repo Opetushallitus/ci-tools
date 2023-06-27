@@ -15,14 +15,20 @@ on:
         description: 'Location of config which is copied to image'
         required: true
         type: string
+      jarfile:
+        description: 'Jarfile with dependencies, use * for changing elements (example: kouta-internal-*-with-dependencies.jar)'
+        required: true
+        type: string
+      jarfolder:
+        description: 'Folder which contains the jarfile mentioned above'
+        required: false
+        default: 'target'
+        type: string
       working-directory:
+        description: 'Define starting directory for monorepos'
         required: false
         type: string
         default: '.'
-      jarfile:
-        description: 'Jarfile with dependencies (example: target/kouta-internal-*-with-dependencies.jar)'
-        required: true
-        type: string
     secrets:
       AWS_OPH_UTILITY_ROLE_ARN:
         required: true
@@ -39,6 +45,7 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
+
     if: github.actor != 'dependabot[bot]'
     steps:
       - uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
@@ -51,12 +58,12 @@ jobs:
         id: restore-build
         with:
           path: |
-            ${{ inputs.jarfile }}
+            ${{ inputs.jarfolder }}
           key: ${{ github.sha }}
 
-      - name: Check that there is a .jar file available in target/
+      - name: Check that there is a .jar file available in jarfolder
         run: |
-          count=$(find ${{ inputs.jarfile }} -type f | wc -l)
+          count=$(find ${{ inputs.jarfolder }}/${{ inputs.jarfile }} -type f | wc -l)
           if [ $count -eq 0 ]
           then
             exit 1
@@ -94,7 +101,7 @@ jobs:
         run: |
           mkdir -p $DOCKER_BUILD_DIR && mkdir $DOCKER_BUILD_DIR/config && mkdir $DOCKER_BUILD_DIR/artifact
           curl -LJO --output-dir $DOCKER_BUILD_DIR https://raw.githubusercontent.com/Opetushallitus/ci-tools/master/github-build/Dockerfile
-          cp -v ${{ inputs.jarfile }} $DOCKER_BUILD_DIR/artifact/${{ inputs.application }}.jar
+          cp -v ${{ inputs.jarfolder }}/${{ inputs.jarfile }} $DOCKER_BUILD_DIR/artifact/${{ inputs.application }}.jar
           cp -vr ${{ inputs.configfolder }} $DOCKER_BUILD_DIR/config/
           sed -i -e "s|BASEIMAGE|${ECR_REPO}/${{ inputs.base-image }}|g" ${DOCKER_BUILD_DIR}/Dockerfile
           if [ -d "${DOCKER_BUILD_DIR}/native_libs" ]; then sed -i '/^CMD.*/i COPY native_libs/* /usr/lib' ${DOCKER_BUILD_DIR}/Dockerfile; fi
