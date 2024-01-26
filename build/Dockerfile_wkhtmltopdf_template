@@ -1,4 +1,4 @@
-FROM surnet/alpine-wkhtmltopdf:3.16.2-0.12.6-small as wkhtmltopdf
+FROM surnet/alpine-wkhtmltopdf:3.19.0-0.12.6-small as wkhtmltopdf
 FROM BASEIMAGE
 
 ARG name
@@ -16,7 +16,7 @@ RUN apk add --no-cache \
   libx11 \
   libxrender \
   libxext \
-  libssl1.1 \
+  libssl3 \
   ca-certificates \
   fontconfig \
   freetype \
