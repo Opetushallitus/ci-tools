@@ -24,16 +24,8 @@ RUN apk add --no-cache \
   ttf-droid \
   ttf-freefont \
   ttf-liberation \
-&& apk add --no-cache --virtual .build-deps \
-  msttcorefonts-installer \
-\
-# Install microsoft fonts
-&& update-ms-fonts \
-&& fc-cache -f \
-\
 # Clean up when done
-&& rm -rf /tmp/* \
-&& apk del .build-deps
+&& rm -rf /tmp/*
 
 # Copy wkhtmltopdf files from docker-wkhtmltopdf image
 COPY --from=wkhtmltopdf /bin/wkhtmltopdf /bin/wkhtmltopdf
